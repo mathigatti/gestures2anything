@@ -2,7 +2,7 @@
 
 Use your webcam to identify gestures and trigger any script
 
-![Gestures identification website](imgs/website.jpg)
+[![Gestures identification website](imgs/website.jpg)](https://gestos.mathigatti.com/)
 
 # How it works?
 
