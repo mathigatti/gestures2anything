@@ -1,6 +1,6 @@
 # gestures2anything
 
-User your webcam to identify gestures and trigger python scripts
+User your webcam to identify gestures and trigger any script
 
 ![Gestures identification website](imgs/website.jpg)
 
