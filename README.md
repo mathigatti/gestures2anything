@@ -24,3 +24,7 @@ For more details about the website development check [this repository](https://g
 2. Go to [the website](http://gestos.mathigatti.com/) and modify the selection bar in order to choose the midi output (Instead of `None`).
 
 ![Sample script output](imgs/sample_script.jpg)
+
+## Support my work
+
+Mathias's open-source projects are supported by [his ko-fi](https://ko-fi.com/mathigatti). If you found this project helpful, any monetary contributions to the Patreon are appreciated and will be put to good creative use.
