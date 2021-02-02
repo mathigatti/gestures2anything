@@ -17,12 +17,10 @@ For more details about the website development check [this repository](https://g
 
 # Usage
 
-First run the script.
+1. Run the script.
 
 ```python midi_example.py```
 
-Then go to [the website](http://gestos.mathigatti.com/) and modify the selection bar in order to choose the midi output (Instead of `None`).
-
-Once that's setted up tt should generate something like this
+2. Go to [the website](http://gestos.mathigatti.com/) and modify the selection bar in order to choose the midi output (Instead of `None`).
 
 ![Sample script output](imgs/sample_script.jpg)
