@@ -8,6 +8,8 @@ User your webcam to identify gestures and trigger python scripts
 
 Using [this](http://gestos.mathigatti.com/) website you can identify 6 basic gestures and receive their MIDI code into your computer. `midi_example.py` is a simple script that receives the messages and prints them. You can replace the print statement for anything else you want.
 
+For more details about the website development check [this repository](https://github.com/mathigatti/GesturesController).
+
 # Requirements
 
 - Python 3
