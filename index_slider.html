@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<!-- saved from url=(0030)https://slider.mathigatti.com/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <link rel="icon" href="https://slider.mathigatti.com/favicon.png">
+  
+  <title>Gestures to MIDI</title>
+  <script src="./index_slider_files/tfjs"></script>
+  <script src="./index_slider_files/handpose"></script>
+  <script src="./index_slider_files/fingerpose.js" type="text/javascript"></script>
+  <script src="./index_slider_files/webmidi"></script>
+  <script src="./index_slider_files/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous">
+  </script>
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="./index_slider_files/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="./index_slider_files/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="./index_slider_files/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background-color: #333333;
+      color: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #video-container {
+      width: 640px;
+      height: 480px;
+      position: relative;
+    }
+
+    .layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #pose-video {
+      transform: scaleX(-1);
+    }
+
+    #pose-result {
+      font-size: 100px;
+      text-align: right;
+      padding: 20px 30px 0 0;
+    }
+  </style>
+</head>
+<body>
+    <div class="container">
+      <div class="header clearfix">
+        <h1>Gestures to MIDI</h1>
+      </div>
+
+        <p class="lead">Chose your MIDI output and controll it with your gestures. Supported gestures are 0, 1, 2, 3, 4, 5 and "rock and roll gesture"</p>
+
+      <div align="center">
+          <select class="form-control" id="slider-type">
+            <option>Vertical</option>
+            <option>Horizontal</option>
+          </select>
+
+          <select class="form-control" id="outputs">
+            <option>None</option>
+          <option value="Midi Through Port-0">Midi Through Port-0</option></select>
+
+          <div id="video-container">
+            <video id="pose-video" class="layer" playsinline="" width="640" height="480"></video>
+            <canvas id="pose-canvas" class="layer" width="640" height="480"></canvas>
+            <div id="pose-result" class="layer"></div>
+          </div>
+
+        <h4>Developed by <a align="center" href="https://mathigatti.com/" target="_blank">mathigatti</a></h4>
+      </div>
+
+    </div>
+  <script>
+  // Enable WebMidi.js
+  WebMidi.enable(function (err) {
+      if (err) {
+        console.log("WebMidi could not be enabled.", err);
+      }
+
+      WebMidi.outputs.forEach(function (output, index) {
+        console.log("se vienee");
+        console.log(output.name);
+        $("#outputs").append(new Option(output.name, output.name));
+      });
+
+    });
+  </script>
+
+  <script>
+
+    function send_midi(note_name) {
+      var chosen_midi_output = $('#outputs').find(":selected").text();
+
+
+      WebMidi.outputs.forEach(function (output, index) {
+        console.log("mandando nota")
+        console.log(output.name)
+        console.log(chosen_midi_output)
+        if (output.name == chosen_midi_output) {
+          output.playNote(note_name);
+        }
+      });
+
+      WebMidi.enable(function (err) {
+          if (err) {
+            console.log("WebMidi could not be enabled.", err);
+          }          
+
+          WebMidi.outputs.forEach(function (output, index) {
+            console.log("mandando nota")
+            console.log(output.name)
+            console.log(chosen_midi_output)
+            if (output.name == chosen_midi_output) {
+              output.playNote(note_name);
+            }
+          });
+      });
+        
+    }
+
+
+
+    const config = {
+      video: { width: 640, height: 480, fps: 30 }
+    };
+
+    const landmarkColors = {
+      thumb: 'red',
+      indexFinger: 'blue',
+      middleFinger: 'yellow',
+      ringFinger: 'green',
+      pinky: 'pink',
+      palmBase: 'white'
+    };
+
+    async function main() {
+
+      const video = document.querySelector("#pose-video");
+      const canvas = document.querySelector("#pose-canvas");
+      const ctx = canvas.getContext("2d");
+
+      const resultLayer = document.querySelector("#pose-result");
+
+      // configure gesture estimator
+
+      // load handpose model
+      const model = await handpose.load();
+      console.log("Handpose model loaded");
+
+      // main estimation loop
+      const estimateHands = async () => {
+
+        // clear canvas overlay
+        ctx.clearRect(0, 0, config.video.width, config.video.height);
+        resultLayer.innerText = '';
+
+        // get hand landmarks from video
+        // Note: Handpose currently only detects one hand at a time
+        // Therefore the maximum number of predictions is 1
+        const predictions = await model.estimateHands(video, true);
+
+        for(let i = 0; i < predictions.length; i++) {
+
+          // draw colored dots at each predicted joint position
+          for(let part in predictions[i].annotations) {
+            for(let point of predictions[i].annotations[part]) {
+              drawPoint(ctx, point[0], point[1], 3, landmarkColors[part]);
+            }
+          }
+
+          var slider_type = $('#slider-type').find(":selected").text();
+          if (slider_type == "Vertical") {
+            var min = -50;
+            var max = 300;
+            var value = predictions[0].boundingBox.topLeft[1];
+            value = 1 - (value - min)/(max-min);
+          } else {
+            var min = 0;
+            var max = 520;
+            var value = predictions[0].boundingBox.topLeft[0];            
+            value = (value - min)/(max-min);
+          }
+          value = Math.floor(value * 127)
+          //console.log(predictions)
+          //fetch("/gesture/"+result.name)
+          if ( value > 127 ){
+            resultLayer.innerText = 127;
+            send_midi(127);
+          } else if ( value < 0 ) {
+            resultLayer.innerText = 0;
+            send_midi(0);
+          } else {
+            resultLayer.innerText = value;
+            send_midi(value);
+          }
+
+  
+        }
+
+        // ...and so on
+        setTimeout(() => { estimateHands(); }, 1000 / config.video.fps);
+      };
+
+      estimateHands();
+      console.log("Starting predictions");
+    }
+
+    async function initCamera(width, height, fps) {
+
+      const constraints = {
+        audio: false,
+        video: {
+          facingMode: "user",
+          width: width,
+          height: height,
+          frameRate: { max: fps }
+        }
+      };
+
+      const video = document.querySelector("#pose-video");
+      video.width = width;
+      video.height = height;
+
+      // get video stream
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+
+      return new Promise(resolve => {
+        video.onloadedmetadata = () => { resolve(video) };
+      });
+    }
+
+    function drawPoint(ctx, x, y, r, color) {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, 2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+
+      initCamera(
+        config.video.width, config.video.height, config.video.fps
+      ).then(video => {
+        video.play();
+        video.addEventListener("loadeddata", event => {
+          console.log("Camera is ready");
+          main();
+        });
+      });
+
+      const canvas = document.querySelector("#pose-canvas");
+      canvas.width = config.video.width;
+      canvas.height = config.video.height;
+      console.log("Canvas initialized");
+    });
+  </script>
+
+
+
+</body></html>
