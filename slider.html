@@ -1,9 +1,33 @@
 <!DOCTYPE html>
 <!-- saved from url=(0030)https://slider.mathigatti.com/ -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <link rel="icon" href="https://slider.mathigatti.com/favicon.png">
+  <!-- Title -->
   
   <title>Hand to MIDI</title>
+  <meta property="og:title" content="Hand to MIDI">
+
+  <!--Favicon-->
+  <link rel="icon" href="https://mathigatti.com/favicon/favicon.png">
+
+  <!--Preview Images-->
+
+  
+    <meta property="og:image" content="https://github.com/mathigatti/gestures2anything/raw/main/imgs/website.jpg">
+    <link rel="image_src" href="/imgs/website.jpg">
+  
+
+  <!--Description-->
+  
+      <meta name="description" content="Use your webcam to track your hand and trigger sounds">
+      <meta property="og:description" content="Use your webcam to track your hand and trigger sounds">
+  
+
+  <!--Author-->
+  
+      <meta name="author" content="Mathias Gatti">
+  
+  <meta name="twitter:card" content="summary_large_image">
+
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
   <script src="fingerpose.js" type="text/javascript"></script>
@@ -27,7 +51,6 @@
 
     * {
       box-sizing: border-box;
-      user-select: none;
     }
 
     html, body {
@@ -71,9 +94,15 @@
 <body>
     <div class="container">
       <div class="header clearfix">
-        <h1>Gestures to MIDI</h1>
+        <h1>Hand to MIDI</h1>
+        <p><a href="/">Getures Tracker</a> | <a href="#">Hand Tracker</a></p>
+
       </div>
         <p class="lead">Move your hand it will be mapped to numbers. You can use the number to trigger stuff or just play with the browser <a href="https://en.wikipedia.org/wiki/Theremin"  target="_blank">theremin</a>.</p>
+
+      <select class="form-control" id="outputs"><option>Choose your MIDI output</option></select>
+
+      </br>
 
       Turn on theremin: <input type="checkbox" id="loop" name="loop1" checked>
 
@@ -81,10 +110,6 @@
       <br/>
 
       <div align="center">
-          <select class="form-control" id="outputs">
-            <option>None</option>
-          <option value="Midi Through Port-0">Midi Through Port-0</option></select>
-
           <div id="video-container">
             <video id="pose-video" class="layer" playsinline="" width="640" height="480"></video>
             <canvas id="pose-canvas" class="layer" width="640" height="480"></canvas>
