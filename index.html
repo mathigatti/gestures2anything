@@ -4,21 +4,13 @@
   <link rel="icon" href="https://gestos.mathigatti.com/favicon.png">
   
   <title>Gestures to MIDI</title>
-  <script src="./Gestures to MIDI_files/tfjs"></script>
-  <script src="./Gestures to MIDI_files/handpose"></script>
-  <script src="./Gestures to MIDI_files/fingerpose.js" type="text/javascript"></script>
-  <script src="./Gestures to MIDI_files/webmidi"></script>
-  <script src="./Gestures to MIDI_files/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous">
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+  <script src="fingerpose.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/webmidi"></script>
 
-  <!-- Latest compiled and minified CSS -->
-  <link rel="stylesheet" href="./Gestures to MIDI_files/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
-
-  <!-- Optional theme -->
-  <link rel="stylesheet" href="./Gestures to MIDI_files/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
-
-  <!-- Latest compiled and minified JavaScript -->
-  <script src="./Gestures to MIDI_files/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+  <script src="https://github.com/Tonejs/Tone.js/releases/download/14.7.39/Tone.js"></script>
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
 
   <style>
 
@@ -66,12 +58,31 @@
   </style>
 </head>
 <body>
-    <div class="container">
-      <div class="header clearfix">
-        <h1>Gestures to MIDI</h1>
-      </div>
+      <h1>Gestures to MIDI</h1>
+      <p class="lead">Chose your MIDI output and controll it with your gestures. Supported gestures are 1, 2, 3, 4, 5, Rock & Roll and closed hand. Closed hand gesture stops all the loops.</p>
 
-        <p class="lead">Chose your MIDI output and controll it with your gestures. Supported gestures are 0, 1, 2, 3, 4, 5 and "rock and roll gesture"</p>
+      <button onclick="Tone.Transport.stop();music_on=false;">Mute browser Music</button>
+
+      <table>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>2</td>
+            <td>3</td>
+            <td>4</td>
+            <td>5</td>
+            <td>Rock & Roll</td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" id="loop"></td>
+            <td><input type="checkbox" id="loop"></td>
+            <td><input type="checkbox" id="loop"></td>
+            <td><input type="checkbox" id="loop"></td>
+            <td><input type="checkbox" id="loop"></td>
+            <td><input type="checkbox" id="loop"></td>
+          </tr>
+        </tbody>
+      </table>
 
       <div align="center">
           <select class="form-control" id="outputs">
@@ -105,17 +116,15 @@
   </script>
 
   <script>
+    var music_on = true;
 
     function send_midi(note_name) {
       var chosen_midi_output = $('#outputs').find(":selected").text();
 
-
       WebMidi.outputs.forEach(function (output, index) {
-        console.log("mandando nota")
-        console.log(output.name)
-        console.log(chosen_midi_output)
         if (output.name == chosen_midi_output) {
-          output.playNote(note_name);
+          //output.playNote(note_name);
+          output.sendControlChange('soundcontrol6',0);
         }
       });
 
@@ -125,18 +134,15 @@
           }          
 
           WebMidi.outputs.forEach(function (output, index) {
-            console.log("mandando nota")
-            console.log(output.name)
-            console.log(chosen_midi_output)
             if (output.name == chosen_midi_output) {
-              output.playNote(note_name);
+              //output.playNote(note_name);
+              output.sendControlChange('soundcontrol6',0);
+
             }
           });
       });
         
     }
-
-
 
     const config = {
       video: { width: 640, height: 480, fps: 30 }
@@ -153,13 +159,24 @@
 
     const gestureStrings = {
       '0': 'Silence',
-      '1': 'C4',
-      '2': 'D4',
-      '3': 'E4',
-      '4': 'F4',
-      '5': 'G4',
-      'rock': 'A4'
+      '1': '1',
+      '2': '2',
+      '3': '3',
+      '4': '4',
+      '5': '5',
+      'rock': 'rock'
     };
+
+    const gesture2index = {
+      '0': 0,
+      '1': 1,
+      '2': 2,
+      '3': 3,
+      '4': 4,
+      '5': 5,
+      'rock': 6
+    };
+
 
     async function main() {
 
@@ -218,10 +235,15 @@
             });
 
             resultLayer.innerText = gestureStrings[result.name];
-            //fetch("/gesture/"+result.name)
+
+            send_midi(gesture2index[result.name]);
+
             if (gestureStrings[result.name] != "Silence") {
-              send_midi(gestureStrings[result.name]);
+              select_loop(gesture2index[result.name] - 1);
+            } else {
+              unselect_all();
             }
+
             
           }
         }
@@ -283,6 +305,70 @@
       canvas.height = config.video.height;
       console.log("Canvas initialized");
     });
+
+    function select_loop(i) {
+      var tick = document.getElementsByTagName('input')[i];
+      if (!tick.checked){
+        tick.checked = true;
+        if (music_on){
+          Tone.start();
+          Tone.Transport.start();
+
+        }
+
+      }
+    }
+
+    function unselect_loop(i) {
+      var tick = document.getElementsByTagName('input')[i];
+      tick.checked = false;
+    }
+
+    function unselect_all(){
+      get_selected_loops().forEach(unselect_loop);
+    }
+
+    function get_selected_loops() {
+      var ticks = document.getElementsByTagName('input');
+      var selected_ticks = [];
+      for (i = 0; i < ticks.length; i++) {
+        if (ticks[i].checked){
+          selected_ticks.push(i)
+        }
+      }
+      return selected_ticks
+    }
+
+    function bpm(){
+      return 128;
+    }
+
+
+    const loop_duration = 4;
+    const loops = new Tone.Players({
+      urls: {
+        0: "drums1.wav",
+        1: "melody1.wav",
+        2: "bass1.wav",
+        3: "drums2.wav",
+        4: "melody2.wav",
+        5: "drums1.wav",
+      },
+      fadeOut: "64n",
+      baseUrl: "loops/"
+    }).toDestination();
+
+    const osc = new Tone.Oscillator().toDestination();
+    Tone.Transport.bpm.value = bpm();
+
+    Tone.Transport.scheduleRepeat(time => {
+      get_selected_loops().forEach(function (num) {
+          loops.player(num).start(time).stop(time + loop_duration);
+        }
+      )
+      
+    }, "2n");
+
   </script>
 
 
