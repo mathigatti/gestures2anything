@@ -207,8 +207,8 @@
           value_h = Math.min(value_h,max_cc);
 
           resultLayer.innerText = 'h:' + value_h + ' v:' + value_v;
-          send_midi_cc(value_v,'soundcontrol6');
-          send_midi_cc(value_h,'soundcontrol7');
+          send_midi_cc(value_v,75);
+          send_midi_cc(value_h,76);
 
           if ( $('input')[0].checked ) {
             updateVolume(value_v);

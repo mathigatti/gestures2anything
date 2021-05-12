@@ -20,8 +20,8 @@
 
   <!--Description-->
   
-      <meta name="description" content="Use your webcam to identify gestures and trigger any script">
-      <meta property="og:description" content="Use your webcam to identify gestures and trigger any script">
+      <meta name="description" content="Use your webcam to identify gestures and control anything with your hands">
+      <meta property="og:description" content="Use your webcam to identify gestures and control anything with your hands">
   
 
   <!--Author-->
@@ -69,6 +69,10 @@
       padding: 0;
     }
 
+    img {
+      border: 5px solid #000;
+    }
+
     #video-container {
       width: 640px;
       height: 480px;
@@ -102,9 +106,9 @@
       <p><a href="#">Getures Tracker</a> | <a href="/slider.html">Hand Tracker</a></p>
       </div>
 
-      <p class="lead">Chose your MIDI output and controll it with your gestures. Supported gestures are 1, 2, 3, 4, 5, Rock & Roll and closed hand. Closed hand gesture stops all the loops.</p>
+      <p class="lead">Use your gestures to controll anything. Try triggering some loops in the browser or connect it to a MIDI input and control whatver you want. </p>
 
-      <select class="form-control" id="outputs"><option>Choose your MIDI output</option></select>
+      <select class="form-control" id="outputs"><option>Choose your MIDI input</option></select>
 
       </br>
 
@@ -127,24 +131,27 @@
         <tbody>
           <tr>
             <th>Gesture</th>
-            <td>1</td>
-            <td>2</td>
-            <td>3</td>
-            <td>4</td>
-            <td>5</td>
-            <td>Rock & Roll</td>
+            <td><img src="imgs/0.png" width="100px" height="100px"></td>
+            <td><img src="imgs/1.png" width="100px" height="100px"></td>
+            <td><img src="imgs/2.png" width="100px" height="100px"></td>
+            <td><img src="imgs/3.png" width="100px" height="100px"></td>
+            <td><img src="imgs/4.png" width="100px" height="100px"></td>
+            <td><img src="imgs/5.png" width="100px" height="100px"></td>
+            <td><img src="imgs/rock&roll.png" width="100px" height="100px"></td>
           </tr>
           <tr>
             <th>Loop</th>
+            <td>Resting gesture</td>
             <td>Drums 1</td>
-            <td>Melody 1</td>
-            <td>Bass 1</td>
             <td>Drums 2</td>
+            <td>Bass 1</td>
+            <td>Melody 1</td>
             <td>Melody 2</td>
-            <td>Drums 3</td>
+            <td>Melody 3</td>
           </tr>
           <tr>
             <th>Playing?</th>
+            <td><input type="checkbox" id="loop"></td>
             <td><input type="checkbox" id="loop"></td>
             <td><input type="checkbox" id="loop"></td>
             <td><input type="checkbox" id="loop"></td>
@@ -157,8 +164,8 @@
 
     </div>
   <script>
-  // Enable WebMidi.js
-  WebMidi.enable(function (err) {
+    // Enable WebMidi.js
+    WebMidi.enable(function (err) {
       if (err) {
         console.log("WebMidi could not be enabled.", err);
       }
@@ -170,9 +177,8 @@
       });
 
     });
-  </script>
 
-  <script>
+
     var music_on = true;
 
     function send_midi(note_name) {
@@ -181,7 +187,7 @@
       WebMidi.outputs.forEach(function (output, index) {
         if (output.name == chosen_midi_output) {
           //output.playNote(note_name);
-          output.sendControlChange('soundcontrol6',0);
+          output.sendControlChange(75,0);
         }
       });
 
@@ -215,7 +221,7 @@
     };
 
     const gestureStrings = {
-      '0': 'Silence',
+      '0': '0',
       '1': '1',
       '2': '2',
       '3': '3',
@@ -234,6 +240,19 @@
       'rock': 6
     };
 
+    var predictions_array = []; 
+    var last_gesture = null;
+
+    function count(array, elem) {
+      let c = 0;
+
+      for (let i = 0; i < array.length; i++) 
+        if (array[i] == elem) {
+          c++
+        }
+      return c;
+
+    }
 
     async function main() {
 
@@ -286,26 +305,27 @@
 
           if(est.gestures.length > 0) {
 
+
             // find gesture with highest confidence
-            let result = est.gestures.reduce((p, c) => { 
+            let result = est.gestures.reduce((p, c) => {
               return (p.confidence > c.confidence) ? p : c;
             });
-
             resultLayer.innerText = gestureStrings[result.name];
+            predictions_array.push(result.name);
+            predictions_array = predictions_array.slice(Math.max(predictions_array.length - 10, 0));
 
-            send_midi(gesture2index[result.name]);
+            if ( last_gesture != result.name && count(predictions_array, result.name) > 5 ) {
+              last_gesture = result.name
+              send_midi(gesture2index[result.name]);
 
-            if (gestureStrings[result.name] != "Silence") {
-              select_loop(gesture2index[result.name] - 1);
-            } else {
-              unselect_all();
+              switch_loop(gesture2index[result.name]);
+
             }
 
-            
           }
+
         }
 
-        // ...and so on
         setTimeout(() => { estimateHands(); }, 1000 / config.video.fps);
       };
 
@@ -376,6 +396,16 @@
       }
     }
 
+    function switch_loop(i) {
+      var tick = document.getElementsByTagName('input')[i];
+      if (!tick.checked) {
+        select_loop(i)
+      } else {
+        unselect_loop(i);
+      }
+    }
+
+
     function unselect_loop(i) {
       var tick = document.getElementsByTagName('input')[i];
       tick.checked = false;
@@ -404,12 +434,13 @@
     const loop_duration = 2;
     const loops = new Tone.Players({
       urls: {
-        0: "drums1.wav",
-        1: "melody1.wav",
-        2: "bass1.wav",
-        3: "drums2.wav",
-        4: "melody2.wav",
-        5: "drums1.wav",
+        0: "silence.mp3",
+        1: "drums1.mp3",
+        2: "drums2.mp3",
+        3: "bass1.mp3",
+        4: "melody1.mp3",
+        5: "melody2.mp3",
+        6: "melody3.mp3",
       },
       fadeOut: "64n",
       baseUrl: "loops/"
