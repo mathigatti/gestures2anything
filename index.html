@@ -2,7 +2,6 @@
 <!-- saved from url=(0030)https://gestos.mathigatti.com/ -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   
-
   <!-- Title -->
   
   <title>Gestures to MIDI</title>
@@ -106,7 +105,7 @@
       <p><a href="#">Getures Tracker</a> | <a href="/slider.html">Hand Tracker</a></p>
       </div>
 
-      <p class="lead">Use your gestures to controll anything. Try triggering some loops in the browser or connect it to a MIDI input and control whatver you want. </p>
+      <p class="lead">Use your gestures to controll anything. Try triggering some loops in the browser or connect it to a MIDI input and control <a href="https://github.com/mathigatti/gestures2anything" target="_blank">whatever you want</a>.</p>
 
       <select class="form-control" id="outputs"><option>Choose your MIDI input</option></select>
 
@@ -317,7 +316,6 @@
             if ( last_gesture != result.name && count(predictions_array, result.name) > 5 ) {
               last_gesture = result.name
               send_midi(gesture2index[result.name]);
-
               switch_loop(gesture2index[result.name]);
 
             }
